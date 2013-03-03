@@ -243,6 +243,15 @@ Your feedback is highly appreciated!
 
   $self->plugin('StaticCompressor');
 
+In the template in your application:
+  <html>
+  <head>
+    ~~~~
+    <%= js '/foo.js', '/bar.js'> <!-- minified and combined, automatically -->
+    <%= css '/baz.css'> <!- minified, automatically ->
+    ~~~~
+  </head>
+
 =head1 DISCRIPTION
 
 This Mojolicious plugin is minifier and compressor for static JavaScript file (.js) and CSS file (.css).

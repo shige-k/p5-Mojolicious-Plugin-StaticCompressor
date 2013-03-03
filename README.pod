@@ -10,7 +10,25 @@ Your feedback is highly appreciated!
 
 =head1 SYNOPSIS
 
-  $self->plugin('StaticCompressor');
+Into the your Mojolicious application:
+
+  sub startup {
+    my $self = shift;
+
+    $self->plugin('StaticCompressor');
+    ~~~
+
+(Also, you can read the examples using the Mojolicious::Lite, in a later section.)
+
+Then, into the template in your application:
+
+  <html>
+  <head>
+    ~~~~
+    <%= js '/foo.js', '/bar.js'> <!-- minified and combined, automatically -->
+    <%= css '/baz.css'> <!- minified, automatically ->
+    ~~~~
+  </head>
 
 =head1 DISCRIPTION
 
@@ -76,6 +94,16 @@ You can disable a combine (and minify) when running your Mojolicious application
   $self->plugin('StaticCompressor', disable_on_devmode => 1);
 
  (default: 0)
+
+=head1 EXAMPLE OF USE
+
+Prepared a brief sample app for you, with using Mojolicious::Lite:
+
+example/example.pl
+
+  $ morbo example.pl
+
+Let's access to http://localhost:3000/ with your browser.
 
 =head1 SEE ALSO
 
