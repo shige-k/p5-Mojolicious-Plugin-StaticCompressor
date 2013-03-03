@@ -9,7 +9,7 @@ use CSS::Minifier qw();
 use JavaScript::Minifier qw();
 use Mojo::Util qw();
 
-our $importInfos; # Hash ref	- import-key <-> {file-paths, file-type}
+our $importInfos; # Hash ref	- import-key <-> {file-infos, file-type}
 our $IS_DISABLE;
 our $URL_PATH_PREFIX;
 
@@ -43,36 +43,50 @@ sub register {
 				if (exists $importInfos->{$import_key}) {
 					# Found the file-type and file-paths, from importInfos
 					my $file_type = $importInfos->{$import_key}->{type};
-					my @paths = @{$importInfos->{$import_key}->{paths}};
+					my @file_infos = @{$importInfos->{$import_key}->{infos}};
 
 					my $output = "";
 
-					foreach my $path(@paths){
+					foreach my $info(@file_infos){
+						my $path = $info->{path};
+
+						# Check file date
+						my $f; my $file_updated_at;
+						eval {
+							$f = $self->app->static->file($path);
+							$file_updated_at = (stat($f->path()))[9];
+						}; if($@){ die ("Can't read static file: $path\n$@");}
+
 						# Generate of file cache-key
 						my $cache_key  = ($is_enable_minify eq 1) ? $path : 'nomin-'.$path;
-						
+
+						# Find a file on cache
 						if (my $content = $cache->get($cache_key)){ # If found a file on cache...
-							# Combine
-							$output .= $content;
-
-						} else {# If not found a file on cache...
-							# Read a file from static dir
-							my $content;
-							eval {
-								$content = $self->app->static->file($path)->slurp;
-							}; if($@){ die ("Can't load static file: $path\n$@");}
-							# Decoding
-							$content = Encode::decode_utf8($content);
-
-							# Minify
-							$content = minify($file_type, $content) if ($is_enable_minify);
-
-							# Add to cache
-							$cache->set($cache_key, $content);
-
-							# Combine
-							$output .= $content;
+							my $cache_updated_at = $info->{updated_at};
+							if ($file_updated_at eq $cache_updated_at){ # cache is latest
+								# Combine
+								$output .= $content;
+								next;
+							}
 						}
+
+						# If not found a file on cache, or cache were old...
+
+						$info->{updated_at} = $file_updated_at;
+
+						# Read a file from static dir
+						my $content = $f->slurp();
+						# Decoding
+						$content = Encode::decode_utf8($content);
+
+						# Minify
+						$content = minify($file_type, $content) if ($is_enable_minify);
+
+						# Add to cache
+						$cache->set($cache_key, $content);
+
+						# Combine
+						$output .= $content;
 					}
 
 					$self->render(text => $output, format => $file_type);
@@ -150,8 +164,16 @@ sub add_import_info {
 	my ($import_key, $file_type, $file_paths_ref) = @_;
 
 	unless (exists($importInfos->{$import_key})){
+		my @file_infos;
+		foreach my $file_path(@{$file_paths_ref}){
+			push(@file_infos, {
+				path => $file_path,
+				updated_at => 0,
+			});
+		}
+
 		$importInfos->{$import_key} = {
-			paths => $file_paths_ref,
+			infos => \@file_infos,
 			type => $file_type,
 		};
 	}
@@ -206,3 +228,111 @@ sub minify_css {
 }
 
 1;
+__END__
+=head1 NAME
+
+Mojolicious::Plugin::StaticCompressor - Automatic JS/CSS minifier & compressor for Mojolicious
+
+=head2 NOTICE
+
+L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor>
+
+Your feedback is highly appreciated!
+
+=head1 SYNOPSIS
+
+  $self->plugin('StaticCompressor');
+
+=head1 DISCRIPTION
+
+This Mojolicious plugin is minifier and compressor for static JavaScript file (.js) and CSS file (.css).
+
+=head1 INSTALLATION (from GitHub)
+
+  $ git clone git://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor.git
+  $ cpanm ./p5-Mojolicious-Plugin-StaticCompressor
+
+=head1 HELPERS
+
+You can use these helpers on templates and others.
+
+=head2 js $file_path [, ...]
+
+Example of use on template file:
+
+  <%= js '/js/foo.js' %>
+
+This is just available as substitution for the 'javascript' helper (built-in helper of Mojolicious).
+
+However, this helper will output a HTML-tag including the URL which is a compressed files. 
+
+  <script src="/auto_compressed/124015dca008ef1f18be80d7af4a314afec6f6dc"></script>
+
+When this script file has output (just received a request), it is minified automatically.
+
+Then, minified file are cached in the memory.
+
+=head3 Support for multiple files
+
+In addition, You can also use this helper with multiple js-files:
+
+  <%= js '/js/foo.js', '/js/bar.js' %>
+
+In this case, this helper will output a single HTML-tag.
+
+but, when these file has output, these are combined (and minified) automatically.
+
+=head2 css $file_path [, ...]
+
+This is just available as substitution for the 'stylesheet' helper (built-in helper of Mojolicious).
+
+=head2 js_nominify $file_path [, ...]
+
+If you don't want Minify, please use this.
+
+This helper is available for purposes that only combine with multiple js-files.
+
+=head2 css_nominify $file_path [, ...]
+
+If you don't want Minify, please use this.
+
+This helper is available for purposes that only combine with multiple css-files.
+
+=head1 CONFIGURATION
+
+=head2 disable_on_devmode
+
+You can disable a combine (and minify) when running your Mojolicious application as 'development' mode (such as a running on  the 'morbo'), by using this option:
+
+  $self->plugin('StaticCompressor', disable_on_devmode => 1);
+
+ (default: 0)
+
+=head1 EXAMPLE OF USE
+
+Prepared a brief sample app for you, with using Mojolicious::Lite:
+
+example/example.pl
+
+  $ morbo example.pl
+
+Let's access to http://localhost:3000/ with your browser.
+
+=head1 SEE ALSO
+
+L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor> - Your feedback is highly appreciated!
+
+L<Mojolicious>
+
+L<CSS::Minifier>
+
+L<JavaScript::Minifier>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2013, Masanori Ohgita (http://ohgita.info/).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+Thanks, Perl Mongers & CPAN authors. 

@@ -2,6 +2,12 @@
 
 Mojolicious::Plugin::StaticCompressor - Automatic JS/CSS minifier & compressor for Mojolicious
 
+=head2 NOTICE
+
+L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor>
+
+Your feedback is highly appreciated!
+
 =head1 SYNOPSIS
 
   $self->plugin('StaticCompressor');
@@ -27,9 +33,23 @@ Example of use on template file:
 
 This is just available as substitution for the 'javascript' helper (built-in helper of Mojolicious).
 
+However, this helper will output a HTML-tag including the URL which is a compressed files. 
+
+  <script src="/auto_compressed/124015dca008ef1f18be80d7af4a314afec6f6dc"></script>
+
+When this script file has output (just received a request), it is minified automatically.
+
+Then, minified file are cached in the memory.
+
+=head3 Support for multiple files
+
 In addition, You can also use this helper with multiple js-files:
 
   <%= js '/js/foo.js', '/js/bar.js' %>
+
+In this case, this helper will output a single HTML-tag.
+
+but, when these file has output, these are combined (and minified) automatically.
 
 =head2 css $file_path [, ...]
 
@@ -37,16 +57,29 @@ This is just available as substitution for the 'stylesheet' helper (built-in hel
 
 =head2 js_nominify $file_path [, ...]
 
+If you don't want Minify, please use this.
+
 This helper is available for purposes that only combine with multiple js-files.
 
 =head2 css_nominify $file_path [, ...]
 
+If you don't want Minify, please use this.
+
 This helper is available for purposes that only combine with multiple css-files.
 
+=head1 CONFIGURATION
+
+=head2 disable_on_devmode
+
+You can disable a combine (and minify) when running your Mojolicious application as 'development' mode (such as a running on  the 'morbo'), by using this option:
+
+  $self->plugin('StaticCompressor', disable_on_devmode => 1);
+
+ (default: 0)
 
 =head1 SEE ALSO
 
-L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor> - Your feedback is highly appreciated.
+L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor> - Your feedback is highly appreciated!
 
 L<Mojolicious>
 
