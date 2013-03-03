@@ -99,6 +99,8 @@ You can disable a combine (and minify) when running your Mojolicious application
 
 =item * Improvement of the load latency in the first.
 
+=item * Support for LESS and Sass.
+
 =back
 
 Your feedback is highly appreciated!
