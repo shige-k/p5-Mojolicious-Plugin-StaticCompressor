@@ -233,24 +233,29 @@ __END__
 
 Mojolicious::Plugin::StaticCompressor - Automatic JS/CSS minifier & compressor for Mojolicious
 
-=head2 NOTICE
-
-L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor>
-
-Your feedback is highly appreciated!
-
 =head1 SYNOPSIS
 
-  $self->plugin('StaticCompressor');
+Into the your Mojolicious application:
 
-In the template in your application:
+  sub startup {
+    my $self = shift;
+
+    $self->plugin('StaticCompressor');
+    ~~~
+
+(Also, you can read the examples using the Mojolicious::Lite, in a later section.)
+
+Then, into the template in your application:
+
   <html>
   <head>
     ~~~~
-    <%= js '/foo.js', '/bar.js'> <!-- minified and combined, automatically -->
-    <%= css '/baz.css'> <!- minified, automatically ->
+    <%= js '/foo.js', '/bar.js' %> <!-- minified and combined, automatically -->
+    <%= css '/baz.css' %> <!- minified, automatically ->
     ~~~~
   </head>
+
+However, this module has just launched development yet. please give me your feedback.
 
 =head1 DISCRIPTION
 
@@ -317,6 +322,20 @@ You can disable a combine (and minify) when running your Mojolicious application
 
  (default: 0)
 
+=head1 KNOWN ISSUES
+
+=over 4
+
+=item * Implement the disk cache. (Currently is memory cache only.)
+
+=item * Improvement of the load latency in the first.
+
+=back
+
+Your feedback is highly appreciated!
+
+https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor/issues
+
 =head1 EXAMPLE OF USE
 
 Prepared a brief sample app for you, with using Mojolicious::Lite:
@@ -329,7 +348,7 @@ Let's access to http://localhost:3000/ with your browser.
 
 =head1 SEE ALSO
 
-L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor> - Your feedback is highly appreciated!
+L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor>
 
 L<Mojolicious>
 
