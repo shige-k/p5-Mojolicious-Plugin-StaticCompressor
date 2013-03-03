@@ -1,0 +1,64 @@
+=head1 NAME
+
+Mojolicious::Plugin::StaticCompressor - Automatic JS/CSS minifier & compressor for Mojolicious
+
+=head1 SYNOPSIS
+
+  $self->plugin('StaticCompressor');
+
+=head1 DISCRIPTION
+
+This Mojolicious plugin is minifier and compressor for static JavaScript file (.js) and CSS file (.css).
+
+=head1 INSTALLATION (from GitHub)
+
+  $ git clone git://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor.git
+  $ cpanm ./p5-Mojolicious-Plugin-StaticCompressor
+
+=head1 HELPERS
+
+You can use these helpers on templates and others.
+
+=head2 js $file_path [, ...]
+
+Example of use on template file:
+
+  <%= js '/js/foo.js' %>
+
+This is just available as substitution for the 'javascript' helper (built-in helper of Mojolicious).
+
+In addition, You can also use this helper with multiple js-files:
+
+  <%= js '/js/foo.js', '/js/bar.js' %>
+
+=head2 css $file_path [, ...]
+
+This is just available as substitution for the 'stylesheet' helper (built-in helper of Mojolicious).
+
+=head2 js_nominify $file_path [, ...]
+
+This helper is available for purposes that only combine with multiple js-files.
+
+=head2 css_nominify $file_path [, ...]
+
+This helper is available for purposes that only combine with multiple css-files.
+
+
+=head1 SEE ALSO
+
+L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor> - Your feedback is highly appreciated.
+
+L<Mojolicious>
+
+L<CSS::Minifier>
+
+L<JavaScript::Minifier>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2013, Masanori Ohgita (http://ohgita.info/).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+Thanks, Perl Mongers & CPAN authors. 
