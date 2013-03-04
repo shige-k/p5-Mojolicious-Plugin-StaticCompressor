@@ -251,7 +251,7 @@ Then, into the template in your application:
   <head>
     ~~~~
     <%= js '/foo.js', '/bar.js' %> <!-- minified and combined, automatically -->
-    <%= css '/baz.css' %> <!- minified, automatically ->
+    <%= css '/baz.css' %> <!-- minified, automatically -->
     ~~~~
   </head>
 
@@ -320,7 +320,7 @@ You can disable a combine (and minify) when running your Mojolicious application
 
   $self->plugin('StaticCompressor', disable_on_devmode => 1);
 
- (default: 0)
+(default: 0)
 
 =head1 KNOWN ISSUES
 
