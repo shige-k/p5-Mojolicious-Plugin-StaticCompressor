@@ -2,7 +2,7 @@ package Mojolicious::Plugin::StaticCompressor;
 use Mojo::Base 'Mojolicious::Plugin';
 use utf8;
 
-our $VERSION = 0.0.1;
+our $VERSION = 0.0.2;
 
 use Encode qw();
 use CSS::Minifier qw();
@@ -34,7 +34,7 @@ sub register {
 	$app->hook(
 		before_dispatch => sub {
 			my $self = shift;
-			if($self->req->url->path->contains('/'.$URL_PATH_PREFIX . '/')
+			if($self->req->url->path->contains('/'.$URL_PATH_PREFIX)
 				&& $self->req->url->path =~ /\/$URL_PATH_PREFIX\/((nomin\-|)\w+)$/){
 
 				my $import_key = $1;
@@ -251,7 +251,7 @@ Then, into the template in your application:
   <head>
     ~~~~
     <%= js '/foo.js', '/bar.js' %> <!-- minified and combined, automatically -->
-    <%= css '/baz.css' %> <!- minified, automatically ->
+    <%= css '/baz.css' %> <!-- minified, automatically -->
     ~~~~
   </head>
 
@@ -320,7 +320,7 @@ You can disable a combine (and minify) when running your Mojolicious application
 
   $self->plugin('StaticCompressor', disable_on_devmode => 1);
 
- (default: 0)
+(default: 0)
 
 =head1 KNOWN ISSUES
 
@@ -347,6 +347,16 @@ example/example.pl
   $ morbo example.pl
 
 Let's access to http://localhost:3000/ with your browser.
+
+=head1 REQUIREMENTS
+
+=over 4
+
+=item * Mojolicious v3.8x or later (Operability Confirmed: v3.88)
+
+=item * Other dependencies (cpan modules).
+
+=back
 
 =head1 SEE ALSO
 
