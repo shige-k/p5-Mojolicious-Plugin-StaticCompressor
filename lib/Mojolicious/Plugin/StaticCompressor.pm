@@ -2,7 +2,7 @@ package Mojolicious::Plugin::StaticCompressor;
 use Mojo::Base 'Mojolicious::Plugin';
 use utf8;
 
-our $VERSION = 0.0.1;
+our $VERSION = 0.0.2;
 
 use Encode qw();
 use CSS::Minifier qw();
@@ -347,6 +347,16 @@ example/example.pl
   $ morbo example.pl
 
 Let's access to http://localhost:3000/ with your browser.
+
+=head1 REQUIREMENTS
+
+=over 4
+
+=item * Mojolicious v3.8x or later (Operability Confirmed: v3.87)
+
+=item * Other dependencies (cpan modules).
+
+=back
 
 =head1 SEE ALSO
 

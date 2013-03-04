@@ -117,6 +117,16 @@ example/example.pl
 
 Let's access to http://localhost:3000/ with your browser.
 
+=head1 REQUIREMENTS
+
+=over 4
+
+=item * Mojolicious v3.8x or later (Operability Confirmed: v3.87)
+
+=item * Other dependencies (cpan modules).
+
+=back
+
 =head1 SEE ALSO
 
 L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor>
