@@ -1,4 +1,8 @@
 Revision history for Mojolicious::Plugin::StaticCompressor
 
-0.0.1 Sun Mar 4 00:00:00 2013
+0.0.2 Mon Mar 4 11:27:00 2013
+	* Fix: Support for Mojolicious v3.88
+	* Change(POD): SYNOPSIS section
+
+0.0.1 Mon Mar 4 00:00:00 2013
 	* Initial release.

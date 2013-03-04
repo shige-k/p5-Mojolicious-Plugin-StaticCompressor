@@ -34,7 +34,7 @@ sub register {
 	$app->hook(
 		before_dispatch => sub {
 			my $self = shift;
-			if($self->req->url->path->contains('/'.$URL_PATH_PREFIX . '/')
+			if($self->req->url->path->contains('/'.$URL_PATH_PREFIX)
 				&& $self->req->url->path =~ /\/$URL_PATH_PREFIX\/((nomin\-|)\w+)$/){
 
 				my $import_key = $1;
@@ -352,7 +352,7 @@ Let's access to http://localhost:3000/ with your browser.
 
 =over 4
 
-=item * Mojolicious v3.8x or later (Operability Confirmed: v3.87)
+=item * Mojolicious v3.8x or later (Operability Confirmed: v3.88)
 
 =item * Other dependencies (cpan modules).
 

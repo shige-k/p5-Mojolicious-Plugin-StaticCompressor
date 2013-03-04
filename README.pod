@@ -121,7 +121,7 @@ Let's access to http://localhost:3000/ with your browser.
 
 =over 4
 
-=item * Mojolicious v3.8x or later (Operability Confirmed: v3.87)
+=item * Mojolicious v3.8x or later (Operability Confirmed: v3.88)
 
 =item * Other dependencies (cpan modules).
 
