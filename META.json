@@ -23,11 +23,12 @@
          "requires" : {
             "CSS::Minifier" : "0",
             "Encode" : "0",
+            "File::Slurp" : "0",
             "FindBin" : "0",
             "JavaScript::Minifier" : "0",
             "Module::Build" : "0",
             "Mojo::Util" : "0",
-            "Mojolicious" : "0",
+            "Mojolicious" : "3.88",
             "Test::More" : "0",
             "Test::Perl::Critic" : "0",
             "Test::Pod" : "0",
@@ -39,7 +40,7 @@
    "provides" : {
       "Mojolicious::Plugin::StaticCompressor" : {
          "file" : "lib/Mojolicious/Plugin/StaticCompressor.pm",
-         "version" : "v0.0.1"
+         "version" : "v0.0.2"
       }
    },
    "release_status" : "stable",
@@ -48,5 +49,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "v0.0.1"
+   "version" : "v0.0.2"
 }
