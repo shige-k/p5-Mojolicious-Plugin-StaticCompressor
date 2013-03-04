@@ -4,7 +4,7 @@ use utf8;
 
 our $VERSION = 0.0.2;
 
-use Encode qw();
+use Unicode::UTF8 qw();
 use CSS::Minifier qw();
 use JavaScript::Minifier qw();
 use Mojo::Util qw();
@@ -77,7 +77,7 @@ sub register {
 						# Read a file from static dir
 						my $content = $f->slurp();
 						# Decoding
-						$content = Encode::decode_utf8($content);
+						$content = Unicode::UTF8::decode_utf8($content);
 
 						# Minify
 						$content = minify($file_type, $content) if ($is_enable_minify);
