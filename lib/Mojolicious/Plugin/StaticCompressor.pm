@@ -10,28 +10,26 @@ use JavaScript::Minifier qw();
 use Mojo::Util qw();
 
 our $importInfos; # Hash ref	- import-key <-> {file-infos, file-type}
-our $IS_DISABLE;
+our $config = {};
 our $URL_PATH_PREFIX;
 
 sub register {
 	my ($self, $app, $conf) = @_;
-
-	# Load options	-	disable
-	my $disable = $conf->{disable} || 0;
-
-	# Load options	-	disable_on_devmode
-	my $disable_on_devmode = $conf->{disable_on_devmode} || 0;
-
-	# Load options	-	url_path_prefix
-	$URL_PATH_PREFIX = $conf->{url_path_prefix} || 'auto_compressed';
-
+	
 	# Initilaize
 	$importInfos = {};
+	$config = {};
+
+	# Load options
+	my $disable = $conf->{disable} || 0;
+	my $disable_on_devmode = $conf->{disable_on_devmode} || 0;
+	$config->{is_disable} = ($disable eq 1 || ($disable_on_devmode eq 1 && $app->mode eq 'development')) ? 1 : 0;
+
+	my $prefix = $conf->{url_path_prefix} || 'auto_compressed';
+	$config->{url_path_prefix} = $prefix;
 
 	# Initialize file cache (cache each a single file)
 	my $cache = Mojo::Cache->new(max_keys => 100);
-
-	$IS_DISABLE = ($disable eq 1 || ($disable_on_devmode eq 1 && $app->mode eq 'development')) ? 1 : 0;
 	
 	# Add hook
 	$app->hook(
@@ -130,7 +128,7 @@ sub register {
 # Generate of import-key & return import HTML-tag
 sub generate_import {
 	my ($file_type, $is_enable_minify, $paths_ref) = @_;
-	if($IS_DISABLE){
+	if($config->{is_disable}){
 		# If disable mode... Return RAW import HTML-tag
 		return Mojo::ByteStream->new(generate_import_tag_raw($file_type, $paths_ref));
 	}
@@ -379,4 +377,3 @@ This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 Thanks, Perl Mongers & CPAN authors. 
-a
