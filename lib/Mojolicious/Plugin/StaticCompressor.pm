@@ -2,16 +2,18 @@ package Mojolicious::Plugin::StaticCompressor;
 use Mojo::Base 'Mojolicious::Plugin';
 use utf8;
 
-our $VERSION = 0.0.3;
+our $VERSION = '0.0.3';
 
 use Encode qw();
 use CSS::Minifier qw();
 use JavaScript::Minifier qw();
 use Mojo::Util qw();
+use Mojo::IOLoop;
 
-our $importInfos; # Hash ref	- import-key <-> {file-infos, file-type}
-our $config = {};
-our $URL_PATH_PREFIX;
+our $static;			# Instance of Mojo::Asset
+our $importInfos;	# Hash-ref (Imports information)	- import-key <-> {file-infos, file-type}
+our $config;			# Hash-ref (Configuration items)
+our $cache;			# Instance of Mojo::Cache (single files)
 
 sub register {
 	my ($self, $app, $conf) = @_;
@@ -19,24 +21,29 @@ sub register {
 	# Initilaize
 	$importInfos = {};
 	$config = {};
+	$static = $app->static;
+
+	# Initialize file cache (cache each a single file)
+	$cache = Mojo::Cache->new(max_keys => 100);
 
 	# Load options
 	my $disable = $conf->{disable} || 0;
 	my $disable_on_devmode = $conf->{disable_on_devmode} || 0;
 	$config->{is_disable} = ($disable eq 1 || ($disable_on_devmode eq 1 && $app->mode eq 'development')) ? 1 : 0;
 
+	$config->{is_background} = $conf->{background} || 1;
+
+	$config->{is_only_background} = $conf->{only_background_processed} || 1;
+
 	my $prefix = $conf->{url_path_prefix} || 'auto_compressed';
 	$config->{url_path_prefix} = $prefix;
-
-	# Initialize file cache (cache each a single file)
-	my $cache = Mojo::Cache->new(max_keys => 100);
 	
 	# Add hook
 	$app->hook(
 		before_dispatch => sub {
 			my $self = shift;
-			if($self->req->url->path->contains('/'.$URL_PATH_PREFIX)
-				&& $self->req->url->path =~ /\/$URL_PATH_PREFIX\/((nomin\-|)\w+)$/){
+			if($self->req->url->path->contains('/'.$config->{url_path_prefix})
+				&& $self->req->url->path =~ /\/$config->{url_path_prefix}\/((nomin\-|)\w+)$/){
 
 				my $import_key = $1;
 				my $is_enable_minify = $2 eq 'nomin-' ? 0 : 1;
@@ -47,47 +54,22 @@ sub register {
 					my @file_infos = @{$importInfos->{$import_key}->{infos}};
 
 					my $output = "";
+					my $is_cached_flg = 0; # 0 = cached, 1 = processed just in time.
 
-					foreach my $info(@file_infos){
-						my $path = $info->{path};
+					foreach my $file_info (@file_infos){
+						# Get processed file
+						my ($content, $is_cached) = get_processed_file($file_info, $is_enable_minify);
 
-						# Check file date
-						my $f; my $file_updated_at;
-						eval {
-							$f = $self->app->static->file($path);
-							$file_updated_at = (stat($f->path()))[9];
-						}; if($@){ die ("Can't read static file: $path\n$@");}
-
-						# Generate of file cache-key
-						my $cache_key  = ($is_enable_minify eq 1) ? $path : 'nomin-'.$path;
-
-						# Find a file on cache
-						if (my $content = $cache->get($cache_key)){ # If found a file on cache...
-							my $cache_updated_at = $info->{updated_at};
-							if ($file_updated_at eq $cache_updated_at){ # cache is latest
-								# Combine
-								$output .= $content;
-								next;
-							}
-						}
-
-						# If not found a file on cache, or cache were old...
-
-						$info->{updated_at} = $file_updated_at;
-
-						# Read a file from static dir
-						my $content = $f->slurp();
-						# Decoding
-						$content = Encode::decode_utf8($content);
-
-						# Minify
-						$content = minify($file_type, $content) if ($is_enable_minify);
-
-						# Add to cache
-						$cache->set($cache_key, $content);
-
+						$is_cached_flg = 1 if ($is_cached);
+						
 						# Combine
 						$output .= $content;
+					}
+
+					if($is_cached_flg){
+						$self->res->headers->header('X-Asset-Compressed' => 'Cached by Mojolicious::Plugin::StaticCompressor');
+					} else {
+						$self->res->headers->header('X-Asset-Compressed' => 'JIT by Mojolicious::Plugin::StaticCompressor');
 					}
 
 					$self->render(text => $output, format => $file_type);
@@ -123,24 +105,167 @@ sub register {
 		my @file_paths = @_;
 		return generate_import('css', 0, \@file_paths);
 	});
+
+	# Background process loop
+	if($config->{is_background}){
+		Mojo::IOLoop->recurring(1 => sub {
+    			my $loop = shift;
+    			foreach my $import_key (keys %{$importInfos}){
+
+    				my $is_enable_minify = 1;
+    				if($import_key =~ /nomin\-\w+/){
+				 	$is_enable_minify = 0;
+    				}
+
+				my $file_type = $importInfos->{$import_key}->{type};
+				my @file_infos = @{$importInfos->{$import_key}->{infos}};
+
+				my $is_processed = 0;
+				foreach my $file_info (@file_infos){
+
+					my $cache_key  = generate_cache_key($file_info->{path}, $is_enable_minify);
+
+					unless (get_cached_file($cache_key)){ # If NOT found a file on cache...
+
+						# Proccess and cache this file.
+						generate_processed_file($file_info->{path}, $file_type, $is_enable_minify);
+
+						# Exit from loop
+						$is_processed = 1;
+						last;
+					}
+				}
+
+				if($is_processed){
+					last;
+				}
+    			}
+  		});
+	}
+}
+
+# Get to processed file (from cache or just generated) - Return: ($content, $is_cached)
+sub get_processed_file {
+	my ($file_info, $is_enable_minify) = @_;
+
+	my $path = $file_info->{path};
+	my $f;
+
+	# Check file date
+	my $file_updated_at;
+	eval {
+		$f = $static->file($path);
+		$file_updated_at = (stat($f->path()))[9];
+	}; if($@){ die ("Can't read static file: $path\n$@");}
+
+	# Generate of file cache-key
+	my $cache_key  = generate_cache_key($path, $is_enable_minify);
+
+	# Find a file on cache
+	my $content = get_cached_file($cache_key);
+	if(defined $content){
+		if ($file_updated_at eq $file_info->{updated_at}){ # cache is latest
+			return ($content, 1);
+		}
+	}
+
+	# If not found a file on cache, or cache were old...
+
+	# Process the file, and cache it.
+	$content = generate_processed_file($path, $is_enable_minify);
+
+	# Update the updated_at
+	$file_info->{updated_at} = $file_updated_at;
+
+	return ($content, 0);
+}
+
+# Check exists the cached file
+sub is_exists_cached_file {
+	my ($cache_key) = @_;
+	if ($cache->get($cache_key)){ # If found a file on cache...
+		return 1;
+	}
+	return undef;
+}
+
+# Get the cached file
+sub get_cached_file {
+	my ($cache_key) = @_;
+	if (my $content = $cache->get($cache_key)){ # If found a file on cache...
+		return $content;
+	}
+	return undef;
+}
+
+# Process and cache the file
+sub generate_processed_file {
+	my ($path, $file_type, $is_enable_minify) = @_;
+
+	# Read a file from static dir
+	my $file;
+	eval {
+		$file = $static->file($path);
+	};
+	if($@){
+		die ("Can't read static file: $path\n$@");
+	}
+	my $content = $file->slurp();
+
+	# Decoding
+	$content = Encode::decode_utf8($content);
+
+	# Minify
+	if($is_enable_minify){
+		$content = minify($file_type, $content);
+	}
+
+	# Generate of cache-key
+	my $cache_key = generate_cache_key($path, $is_enable_minify);
+
+	# Save to cache
+	$cache->set($cache_key, $content);
+
+	return $content;
+}
+
+# Generarte of cache-key
+sub generate_cache_key {
+	my ($path, $is_enable_minify) = @_;
+	my $cache_key  = ($is_enable_minify) ? $path : 'nomin-'.$path;
+	return $cache_key;
 }
 
 # Generate of import-key & return import HTML-tag
 sub generate_import {
 	my ($file_type, $is_enable_minify, $paths_ref) = @_;
-	if($config->{is_disable}){
-		# If disable mode... Return RAW import HTML-tag
+	if($config->{is_disable}){ # If disable mode...
+		# Return the RAW import HTML-tag
 		return Mojo::ByteStream->new(generate_import_tag_raw($file_type, $paths_ref));
 	}
 
 	# Generate of import-key from file-paths
 	my $import_key = generate_import_key($is_enable_minify, $paths_ref);
 	
-	# Add import-key to importInfos hash
+	# Add (Upsert) import-key to importInfos hash
 	add_import_info($import_key, $file_type, $paths_ref);
 	
 	# Return import HTML-tag
-	return Mojo::ByteStream->new(generate_import_tag_compress($file_type, $import_key));
+	if($config->{is_only_background}){ # Background-only mode
+		my $processed_flg = 1;
+		foreach my $file_path (@{$paths_ref}){
+			my $cache_key = generate_cache_key($file_path, $is_enable_minify);
+			unless (is_exists_cached_file($cache_key)){ # Found the file is not yet processed
+				# Return the RAW import HTML-tag, currently.
+				return Mojo::ByteStream->new(generate_import_tag_raw($file_type, $paths_ref));
+			}
+		}
+		# Return the compressed import HTML-tag
+		return Mojo::ByteStream->new(generate_import_tag_compress($file_type, $import_key));
+	} else { # Normal mode (Background or just-in-time)
+		# Return the compressed import HTML-tag
+		return Mojo::ByteStream->new(generate_import_tag_compress($file_type, $import_key));
+	}
 }
 
 # Generate of import-key
@@ -183,7 +308,7 @@ sub add_import_info {
 # Generate of import HTML-tag - minify / compressed url
 sub generate_import_tag_compress {
 	my ($file_type, $import_key) = @_;
-	return return generate_import_tag_html_code($file_type, "/$URL_PATH_PREFIX/$import_key");
+	return return generate_import_tag_html_code($file_type, "/$config->{url_path_prefix}/$import_key");
 }
 
 # Generate of import HTML-tag - RAW url (for DISABLE mode)

@@ -28,7 +28,7 @@ However, this module has just launched development yet. please give me your feed
 
 =head1 DISCRIPTION
 
-This Mojolicious plugin is minifier and compressor for static JavaScript file (.js) and CSS file (.css).
+This Mojolicious plugin is minifier and compressor for asset file, such as the JavaScript file (.js) and CSS file (.css).
 
 =head1 INSTALLATION (from GitHub)
 
