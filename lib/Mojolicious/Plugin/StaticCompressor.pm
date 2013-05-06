@@ -2,9 +2,9 @@ package Mojolicious::Plugin::StaticCompressor;
 use Mojo::Base 'Mojolicious::Plugin';
 use utf8;
 
-our $VERSION = 0.0.2;
+our $VERSION = 0.0.3;
 
-use Unicode::UTF8 qw();
+use Encode qw();
 use CSS::Minifier qw();
 use JavaScript::Minifier qw();
 use Mojo::Util qw();
@@ -15,6 +15,9 @@ our $URL_PATH_PREFIX;
 
 sub register {
 	my ($self, $app, $conf) = @_;
+
+	# Load options	-	disable
+	my $disable = $conf->{disable} || 0;
 
 	# Load options	-	disable_on_devmode
 	my $disable_on_devmode = $conf->{disable_on_devmode} || 0;
@@ -28,7 +31,7 @@ sub register {
 	# Initialize file cache (cache each a single file)
 	my $cache = Mojo::Cache->new(max_keys => 100);
 
-	$IS_DISABLE = ($disable_on_devmode eq 1 && $app->mode eq 'development') ? 1 : 0;
+	$IS_DISABLE = ($disable eq 1 || ($disable_on_devmode eq 1 && $app->mode eq 'development')) ? 1 : 0;
 	
 	# Add hook
 	$app->hook(
@@ -77,7 +80,7 @@ sub register {
 						# Read a file from static dir
 						my $content = $f->slurp();
 						# Decoding
-						$content = Unicode::UTF8::decode_utf8($content);
+						$content = Encode::decode_utf8($content);
 
 						# Minify
 						$content = minify($file_type, $content) if ($is_enable_minify);
@@ -376,3 +379,4 @@ This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 Thanks, Perl Mongers & CPAN authors. 
+a

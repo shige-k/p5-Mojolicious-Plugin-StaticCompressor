@@ -91,6 +91,18 @@ You can disable a combine (and minify) when running your Mojolicious application
 
 (default: 0)
 
+=head2 disable
+
+You can always disable a combine and minify, by using this option:
+
+  $self->plugin('StaticCompressor', disable => 1);
+
+(default: 0)
+
+However, while using the disabled option, you can also use (It mean to only JUST output the source file. it's not combined and not minified.) the provided helpers (such as: 'js', 'js_nominify', and 'css', ...) from this module.
+
+It is useful to temporary work, such as debugging.
+
 =head1 KNOWN ISSUES
 
 =over 4
