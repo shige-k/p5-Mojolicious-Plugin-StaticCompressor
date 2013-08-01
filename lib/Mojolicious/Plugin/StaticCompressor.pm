@@ -98,28 +98,28 @@ sub register {
 	# Add "js" helper
 	$app->helper(js => sub {
 		my $self = shift;
-		my @file_paths = @_;
+		my @file_paths = generate_list( (@_) );	
 		return generate_import('js', 1, \@file_paths);
 	});
 
 	# Add "css" helper
 	$app->helper(css => sub {
 		my $self = shift;
-		my @file_paths = @_;
+		my @file_paths = generate_list( (@_) );
 		return generate_import('css', 1, \@file_paths);
 	});
 
 	# Add "js_nominify" helper
 	$app->helper(js_nominify => sub {
 		my $self = shift;
-		my @file_paths = @_;
+		my @file_paths = generate_list( (@_) );
 		return generate_import('js', 0, \@file_paths);
 	});
 
 	# Add "css_nominify" helper
 	$app->helper(css_nominify => sub {
 		my $self = shift;
-		my @file_paths = @_;
+		my @file_paths = generate_list( (@_) );
 		return generate_import('css', 0, \@file_paths);
 	});
 }
@@ -225,6 +225,22 @@ sub minify_js {
 sub minify_css {
 	my $content = shift;
 	return CSS::Minifier::minify(input => $content);
+}
+
+#Generate one dimensional array 
+sub generate_list{
+	my @temp = @_;
+	my @file_paths;
+	while (@temp) {
+		my $next = shift @temp;
+		if (ref($next) eq 'ARRAY') {
+			unshift @file_paths, @$next;
+		}
+		else {
+		    push @file_paths, $next;
+		}
+	}
+	return @file_paths;
 }
 
 1;
