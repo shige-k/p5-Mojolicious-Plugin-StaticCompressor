@@ -14,5 +14,7 @@ MYMETA.yml
 MYMETA.json
 nytprof.out
 pm_to_blib
+example/auto_compressed/
+t/auto_compressed/
 Mojolicious-Plugin-StaticCompressor-v*.*.*.tar.gz
 Mojolicious-Plugin-StaticCompressor-v*/

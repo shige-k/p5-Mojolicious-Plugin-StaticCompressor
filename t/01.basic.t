@@ -35,16 +35,15 @@ get '/baz' => sub {
 # Test for HTML-tag (script tag, single compressed-file)
 my $t = Test::Mojo->new;
 $t->get_ok('/foo')->status_is(200)->content_like(qr/<script src="(.+)"><\/script>/);
-$t->tx->res->body =~ /<script src="(\/auto_compressed\/\w+)"><\/script>/;
+$t->tx->res->body =~ /<script src="(\/auto_compressed\/.+)"><\/script>/;
 my $script_path = $1;
-
 # Test for script (single compressed js)
 $t->get_ok($script_path)->status_is(200)->content_type_like(qr/application\/javascript\.*/)
 	->content_is( JavaScript::Minifier::minify(input => File::Slurp::read_file("$FindBin::Bin/public/js/foo.js") ."") );
 
 # Test for HTML-tag (script tag, multiple compressed-file)
 $t->get_ok('/foobar')->status_is(200)->content_like(qr/<script src="(.+)"><\/script>/);
-$t->tx->res->body =~ /<script src="(\/auto_compressed\/\w+)"><\/script>/;
+$t->tx->res->body =~ /<script src="(\/auto_compressed\/.+)"><\/script>/;
 $script_path = $1;
 
 # Test for script (multiple compressed js)
@@ -57,8 +56,8 @@ $t->get_ok($script_path)->status_is(200)->content_type_like(qr/application\/java
 
 # Test for HTML-tag (link-rel tag, single compressed-file)
 $t = Test::Mojo->new;
-$t->get_ok('/baz')->status_is(200)->content_like(qr/<link rel="stylesheet" href="\/auto_compressed\/\w+">/);
-$t->tx->res->body =~ /<link rel="stylesheet" href="(\/auto_compressed\/\w+)">/;
+$t->get_ok('/baz')->status_is(200)->content_like(qr/<link rel="stylesheet" href="\/auto_compressed\/.+">/);
+$t->tx->res->body =~ /<link rel="stylesheet" href="(\/auto_compressed\/.+)">/;
 my $css_path = $1;
 
 # Test for script (single compressed css)
