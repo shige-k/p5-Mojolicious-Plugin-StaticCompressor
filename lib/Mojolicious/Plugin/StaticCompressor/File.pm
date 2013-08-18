@@ -158,3 +158,49 @@ sub _minify {
 }
 
 1;
+__END__
+=head1 NAME
+
+Mojolicious::Plugin::StaticCompressor::File
+
+=head1 SYNOPSIS
+
+This is internal package that manipulate for single file.
+
+Please see POD for L<Mojolicious::Plugin::StaticCompressor>.
+
+L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor/blob/master/README.pod>
+
+=head1 METHODS
+
+=head2 new ( ... )
+
+Initialize a instance for single file.
+
+=head2 get_key ( )
+
+Get a cache key of the file. (If necessary, generate it.)
+
+=head2 get_content ( )
+
+Get the processed content of the file.
+(Check for updates of source files. And if necessary, update cache.)
+
+=head2 get_updated_at ( )
+
+Get te updated_at (epoch seconds) from of the file.
+(Check for updates of source files. And if necessary, update cache.)
+
+=head2 get_raw_path ( )
+
+Get a path of the source file.
+
+=head1 SEE ALSO
+
+L<Mojolicious::Plugin::StaticCompressor> ( L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor> )
+
+=head1 COPYRIGHT AND LICENSE
+
+Please see POD for L<Mojolicious::Plugin::StaticCompressor>.
+
+L<https://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor/blob/master/README.pod>
