@@ -27,7 +27,7 @@ get '/foobar_nominify' => sub {
 # Test for HTML-tag (script tag, single compressed-file)
 my $t = Test::Mojo->new;
 $t->get_ok('/foo_nominify')->status_is(200)->content_like(qr/<script src="(.+)"><\/script>/);
-$t->tx->res->body =~ /<script src="(\/auto_compressed\/[\w-]+)"><\/script>/;
+$t->tx->res->body =~ /<script src="(\/auto_compressed\/.+)"><\/script>/;
 my $script_path = $1;
 
 # Test for script (single compressed js, but not minified. Actually, SAME as raw file.) 
@@ -36,7 +36,7 @@ $t->get_ok($script_path)->status_is(200)->content_is( File::Slurp::read_file("$F
 
 # Test for HTML-tag (script tag, multiple compressed-file)
 $t->get_ok('/foobar_nominify')->status_is(200)->content_like(qr/<script src="(.+)"><\/script>/);
-$t->tx->res->body =~ /<script src="(\/auto_compressed\/[\w-]+)"><\/script>/;
+$t->tx->res->body =~ /<script src="(\/auto_compressed\/.+)"><\/script>/;
 $script_path = $1;
 
 # Test for script (multiple compressed js, but not minified)

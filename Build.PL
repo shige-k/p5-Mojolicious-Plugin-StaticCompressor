@@ -21,6 +21,7 @@ my $builder = Module::Build->new(
 		'FindBin'					 => 0,
 		'File::Slurp'				 => 0,
 		'Test::Perl::Critic'			 => 0,
+		'File::Find'					 => 0,
 	},
 	add_to_cleanup      => [ 'Mojolicious-Plugin-StaticCompressor-*' ],
 );

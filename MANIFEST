@@ -5,6 +5,8 @@ example/public/css/style.css
 example/public/js/bar.js
 example/public/js/foo.js
 lib/Mojolicious/Plugin/StaticCompressor.pm
+lib/Mojolicious/Plugin/StaticCompressor/Container.pm
+lib/Mojolicious/Plugin/StaticCompressor/File.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
