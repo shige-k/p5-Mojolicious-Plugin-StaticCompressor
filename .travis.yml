@@ -4,6 +4,6 @@ perl:
   - "5.14"
 
 install:
-    - "cpanm -v --installdeps --notest ." 
+    - "cpanm --installdeps --notest ." 
 
 script: "perl Makefile.PL && make test"
