@@ -1,7 +1,9 @@
 package Mojolicious::Plugin::StaticCompressor;
 use Mojo::Base 'Mojolicious::Plugin';
-use utf8;
 
+use warnings;
+use strict;
+use utf8;
 our $VERSION = '1.0.0';
 
 use Encode qw//;
@@ -21,34 +23,34 @@ sub register {
 	# Initilaize
 	%containers = ();
 	$static = $app->static;
-	$config = load_options( $app, $conf );
+	$config = _load_options( $app, $conf );
 
 	# Add "js" helper
 	$app->helper(js => sub {
 		my $self = shift;
-		my @file_paths = generate_list( (@_) );;
-		return generate_import('js', 1, \@file_paths);
+		my @file_paths = _generate_list( (@_) );;
+		return _generate_import('js', 1, \@file_paths);
 	});
 
 	# Add "css" helper
 	$app->helper(css => sub {
 		my $self = shift;
-		my @file_paths = generate_list( (@_) );;
-		return generate_import('css', 1, \@file_paths);
+		my @file_paths = _generate_list( (@_) );;
+		return _generate_import('css', 1, \@file_paths);
 	});
 
 	# Add "js_nominify" helper
 	$app->helper(js_nominify => sub {
 		my $self = shift;
-		my @file_paths = generate_list( (@_) );;
-		return generate_import('js', 0, \@file_paths);
+		my @file_paths = _generate_list( (@_) );;
+		return _generate_import('js', 0, \@file_paths);
 	});
 
 	# Add "css_nominify" helper
 	$app->helper(css_nominify => sub {
 		my $self = shift;
-		my @file_paths = generate_list( (@_) );;
-		return generate_import('css', 0, \@file_paths);
+		my @file_paths = _generate_list( (@_) );;
+		return _generate_import('css', 0, \@file_paths);
 	});
 
 	unless($config->{is_disable}){ # Enable
@@ -87,17 +89,17 @@ sub register {
 		);
 
 		# Automatic cleanup
-		cleanup_old_files();
+		_cleanup_old_files();
 
 		# Start background loop
 		if($config->{is_background}){
-			start_background_loop();
+			_start_background_loop();
 		}
 	}
 }
 
 # Load the options
-sub load_options {
+sub _load_options {
 	my ($app, $option) = @_;
 	my $config = {};
 
@@ -133,11 +135,11 @@ sub load_options {
 	return $config;
 }
 
-sub generate_import {
+sub _generate_import {
 	my ($extension, $is_minify, $path_files_ref) = @_;
 
 	if($config->{is_disable}){
-		return Mojo::ByteStream->new( generate_import_raw_tag( $extension, $path_files_ref ) );
+		return Mojo::ByteStream->new( _generate_import_raw_tag( $extension, $path_files_ref ) );
 	}
 
 	my $cont = Mojolicious::Plugin::StaticCompressor::Container->new(
@@ -153,11 +155,11 @@ sub generate_import {
 		$containers{$cont->get_key()} = $cont;
 	}
 
-	return Mojo::ByteStream->new( generate_import_processed_tag( $extension, "/".$config->{url_path_prefix}."/".$cont->get_key() ) );
+	return Mojo::ByteStream->new( _generate_import_processed_tag( $extension, "/".$config->{url_path_prefix}."/".$cont->get_key() ) );
 }
 
 # Generate of import HTML-tag for processed
-sub generate_import_processed_tag {
+sub _generate_import_processed_tag {
 	my ($extension, $url) = @_;
 	if ($extension eq 'js'){
 		return "<script src=\"$url\"></script>\n";
@@ -167,7 +169,7 @@ sub generate_import_processed_tag {
 }
 
 # Generate of import HTML-tag for raw
-sub generate_import_raw_tag {
+sub _generate_import_raw_tag {
 	my ($extension, $urls_ref) = @_;
 	my $tag = "";
 	if ($extension eq 'js'){
@@ -183,7 +185,7 @@ sub generate_import_raw_tag {
 }
 
 # Start background process loop
-sub start_background_loop {
+sub _start_background_loop {
 	my $id = Mojo::IOLoop->recurring( $config->{background_interval_sec} => sub {
 		foreach my $key (keys %containers){
 			if( $containers{$key}->update() ){
@@ -194,7 +196,7 @@ sub start_background_loop {
 }
 
 # Cleanup
-sub cleanup_old_files {
+sub _cleanup_old_files {
 	File::Find::find(sub {
 		my $path = $File::Find::name;
 		my $now = time();
@@ -209,7 +211,7 @@ sub cleanup_old_files {
 }
 
 #Generate one dimensional array 
-sub generate_list{
+sub _generate_list{
 	my @temp = @_;
 	my @file_paths;
 	while (@temp) {
@@ -254,7 +256,7 @@ Then, into the template in your application:
 
 However, this module has just launched development yet. please give me your feedback.
 
-=head1 DISCRIPTION
+=head1 DESCRIPTION
 
 This Mojolicious plugin is minifier and compressor for static JavaScript file (.js) and CSS file (.css).
 
@@ -262,6 +264,14 @@ This Mojolicious plugin is minifier and compressor for static JavaScript file (.
 
   $ git clone git://github.com/mugifly/p5-Mojolicious-Plugin-StaticCompressor.git
   $ cpanm ./p5-Mojolicious-Plugin-StaticCompressor
+
+=head1 METHODS
+
+Mojolicious::Plugin::StaticCompressor inherits all methods from L<Mojolicious::Plugin> and implements the following new ones.
+
+=head2 register
+
+Register plugin in L<Mojolicious> application.
 
 =head1 HELPERS
 
