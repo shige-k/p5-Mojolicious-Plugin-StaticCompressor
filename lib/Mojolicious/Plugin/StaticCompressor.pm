@@ -136,6 +136,10 @@ sub load_options {
 sub generate_import {
 	my ($extension, $is_minify, $path_files_ref) = @_;
 
+	if($config->{is_disable}){
+		return Mojo::ByteStream->new( generate_import_raw_tag( $extension, $path_files_ref ) );
+	}
+
 	my $cont = Mojolicious::Plugin::StaticCompressor::Container->new(
 		extension => $extension,
 		is_minify => $is_minify,
@@ -147,10 +151,6 @@ sub generate_import {
 		$containers{$cont->get_key()}->update();
 	} else {
 		$containers{$cont->get_key()} = $cont;
-	}
-
-	if($config->{is_disable}){
-		return Mojo::ByteStream->new( generate_import_raw_tag( $extension, $path_files_ref ) );
 	}
 
 	return Mojo::ByteStream->new( generate_import_processed_tag( $extension, "/".$config->{url_path_prefix}."/".$cont->get_key() ) );
