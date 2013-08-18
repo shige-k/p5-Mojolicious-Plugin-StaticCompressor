@@ -99,7 +99,7 @@ sub _load_file {
 			$asset = $s->{mojo_static}->file($s->{path_file});
 			my $updated_at = (stat($asset->path()))[9];
 			if(!defined $s->{updated_at} || $s->{updated_at} < $updated_at){ # Is Updated
-				$s->{content} = $asset->slurp();
+				$s->{content} = Encode::decode_utf8($asset->slurp());
 				$s->{updated_at} = $updated_at;
 			}
 		}; if($@){ die ("Can't read static file: ". $s->{path_file} ."\n$@"); }
@@ -125,7 +125,7 @@ sub _load_file {
 	eval {
 		$asset = $s->{mojo_static}->file($s->{path_file});
 		$updated_at = (stat($asset->path()))[9];
-		$raw_content = $asset->slurp();
+		$raw_content = Encode::decode_utf8($asset->slurp());
 	}; if($@){ die ("Can't read static file: ".$asset->path()."\n$@"); }
 
 	# Process and cache

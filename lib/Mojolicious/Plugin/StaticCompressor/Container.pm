@@ -119,7 +119,7 @@ sub _load_from_cache {
 		# Load the file and check the update_at
 		eval {
 			my $cache = Mojo::Asset::File->new( path => $path_cache_file );
-			$content = $cache->slurp();
+			$content = Encode::decode_utf8($cache->slurp());
 			my $updated_at = (stat( $path_cache_file ))[9];
 		};
 		if($@){ die("Can't read the cache file:". $path_cache_file); }
