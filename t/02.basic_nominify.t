@@ -30,6 +30,8 @@ $t->get_ok('/foo_nominify')->status_is(200)->content_like(qr/<script src="(.+)">
 $t->tx->res->body =~ /<script src="(\/auto_compressed\/.+)"><\/script>/;
 my $script_path = $1;
 
+warn $script_path;
+
 # Test for script (single compressed js, but not minified. Actually, SAME as raw file.) 
 $t->get_ok($script_path)->status_is(200)->content_is( File::Slurp::read_file("$FindBin::Bin/public/js/foo.js")."" );
 
