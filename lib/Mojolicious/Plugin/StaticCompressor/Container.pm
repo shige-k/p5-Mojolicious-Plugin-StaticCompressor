@@ -88,7 +88,7 @@ sub _init_from_key {
 	if(defined $s->{key}){
 		if($s->{key} =~ /^(nomin\-|)(\w+).(\w+)$/){
 			# Minify
-			if($1 eq 'nomin'){
+			if($1 eq 'nomin-'){
 				$s->{is_minify} = 0;
 			} else {
 				$s->{is_minify} = 1;
