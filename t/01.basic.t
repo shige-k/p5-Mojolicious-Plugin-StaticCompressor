@@ -2,8 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 21;
+use Test::More tests => 25;
 use Test::Mojo;
+use Mojo::Date;
 use FindBin;
 use File::Slurp;
 use CSS::Minifier qw();
@@ -40,6 +41,14 @@ my $script_path = $1;
 # Test for script (single compressed js)
 $t->get_ok($script_path)->status_is(200)->content_type_like(qr/application\/javascript\.*/)
 	->content_is( JavaScript::Minifier::minify(input => File::Slurp::read_file("$FindBin::Bin/public/js/foo.js") ."") );
+
+# Verify that we receive correct last-modified date
+my $script_filename = "$FindBin::Bin/$script_path";
+my $script_updated = Mojo::Date->new((stat $script_filename)[9]);
+$t->header_is('Last-Modified', $script_updated);
+
+# Test that we get 304 if file is not modified
+$t->get_ok($script_path => { 'If-Modified-Since' => $script_updated})->status_is(304)->content_is('');
 
 # Test for HTML-tag (script tag, multiple compressed-file)
 $t->get_ok('/foobar')->status_is(200)->content_like(qr/<script src="(.+)"><\/script>/);
