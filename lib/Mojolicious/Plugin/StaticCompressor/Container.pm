@@ -62,6 +62,12 @@ sub get_key {
 	return $s->{key};
 }
 
+# Get the timestamp for the last update
+sub get_last_updated {
+	my $s = shift;
+	return $s->{last_updated};
+}
+
 # Get the extension
 sub get_extension {
 	my $s = shift;
@@ -124,6 +130,8 @@ sub _load_from_cache {
 		};
 		if($@){ die("Can't read the cache file:". $path_cache_file); }
 
+		$s->{last_updated} = (stat $path_cache_file)[9];		
+		
 		# Parse the file
 		if($content =~ /^\/\*-{5}StaticCompressor-{5}\n((.+\n)+?)-{10}\*\/\n/){
 			my @paths = split("\n", $1);
@@ -210,6 +218,8 @@ EOF
 	$cache->add_chunk( Encode::encode_utf8($save_header.$content) );
 	$cache->move_to( $path_cache_file );
 
+	$s->{last_updated} = time;
+	
 	return 1;
 }
 

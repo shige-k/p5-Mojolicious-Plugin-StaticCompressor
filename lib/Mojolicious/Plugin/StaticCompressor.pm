@@ -78,6 +78,13 @@ sub register {
 							$containers{$cont->get_key()} = $cont;
 						}
 						
+						my $headers = $self->req->headers;
+						if (my $date = $headers->if_modified_since) {
+							my $since = Mojo::Date->new($date)->epoch;
+							$self->res->code(304) if defined $since && $since == $cont->get_last_updated();
+						}
+						
+						$self->res->headers->last_modified(Mojo::Date->new($cont->get_last_updated()));
 						$self->render( text => $cont->get_content(), format => $cont->get_extension() );
 					};
 
