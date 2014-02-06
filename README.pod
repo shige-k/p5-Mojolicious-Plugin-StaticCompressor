@@ -186,6 +186,7 @@ Thank you to:
 =over 4
 
 =item * jakir-hayder L<https://github.com/jakir-hayder>
+=item * legart L<https://github.com/legart>
 
 =back
 
