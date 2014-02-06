@@ -10,6 +10,7 @@ use Encode qw//;
 use File::Find qw//;
 use FindBin;
 use Mojo::IOLoop;
+use Mojo::URL;
 
 use Mojolicious::Plugin::StaticCompressor::Container;
 
@@ -29,28 +30,28 @@ sub register {
 	$app->helper(js => sub {
 		my $self = shift;
 		my @file_paths = _generate_list( (@_) );;
-		return _generate_import('js', 1, \@file_paths);
+		return _generate_import($self, 'js', 1, \@file_paths);
 	});
 
 	# Add "css" helper
 	$app->helper(css => sub {
 		my $self = shift;
 		my @file_paths = _generate_list( (@_) );;
-		return _generate_import('css', 1, \@file_paths);
+		return _generate_import($self, 'css', 1, \@file_paths);
 	});
 
 	# Add "js_nominify" helper
 	$app->helper(js_nominify => sub {
 		my $self = shift;
 		my @file_paths = _generate_list( (@_) );;
-		return _generate_import('js', 0, \@file_paths);
+		return _generate_import($self, 'js', 0, \@file_paths);
 	});
 
 	# Add "css_nominify" helper
 	$app->helper(css_nominify => sub {
 		my $self = shift;
 		my @file_paths = _generate_list( (@_) );;
-		return _generate_import('css', 0, \@file_paths);
+		return _generate_import($self, 'css', 0, \@file_paths);
 	});
 
 	unless($config->{is_disable}){ # Enable
@@ -64,10 +65,10 @@ sub register {
 		$app->hook(
 			before_dispatch => sub {
 				my $self = shift;
-				if($self->req->url->path->contains('/'.$config->{url_path_prefix})
-					&& $self->req->url->path =~ /\/$config->{url_path_prefix}\/(.+)$/){
+
+				if($self->req->url->path =~ /.*\/$config->{url_path_prefix}\/(.+)$/){
 					my $container_key = $1;
-					
+
 					eval {
 						my $cont = Mojolicious::Plugin::StaticCompressor::Container->new(
 							key => $container_key,
@@ -77,7 +78,7 @@ sub register {
 						if(!defined $containers{$cont->get_key()}){
 							$containers{$cont->get_key()} = $cont;
 						}
-						
+
 						my $headers = $self->req->headers;
 						if (my $date = $headers->if_modified_since) {
 							my $since = Mojo::Date->new($date)->epoch;
@@ -143,10 +144,10 @@ sub _load_options {
 }
 
 sub _generate_import {
-	my ($extension, $is_minify, $path_files_ref) = @_;
+	my ($self, $extension, $is_minify, $path_files_ref) = @_;
 
 	if($config->{is_disable}){
-		return Mojo::ByteStream->new( _generate_import_raw_tag( $extension, $path_files_ref ) );
+		return Mojo::ByteStream->new( _generate_import_raw_tag( $self, $extension, $path_files_ref ) );
 	}
 
 	my $cont = Mojolicious::Plugin::StaticCompressor::Container->new(
@@ -162,7 +163,7 @@ sub _generate_import {
 		$containers{$cont->get_key()} = $cont;
 	}
 
-	return Mojo::ByteStream->new( _generate_import_processed_tag( $extension, "/".$config->{url_path_prefix}."/".$cont->get_key() ) );
+	return Mojo::ByteStream->new( _generate_import_processed_tag( $extension, $self->url_for( "/".$config->{url_path_prefix}."/".$cont->get_key() ) ) );
 }
 
 # Generate of import HTML-tag for processed
@@ -177,15 +178,15 @@ sub _generate_import_processed_tag {
 
 # Generate of import HTML-tag for raw
 sub _generate_import_raw_tag {
-	my ($extension, $urls_ref) = @_;
+	my ($self, $extension, $urls_ref) = @_;
 	my $tag = "";
 	if ($extension eq 'js'){
 		foreach(@{$urls_ref}){
-			$tag .= "<script src=\"$_\"></script>\n";
+			$tag .= "<script src=\"". $self->url_for( $_ ). "\"></script>\n";
 		}
 	} elsif ($extension eq 'css'){
 		foreach(@{$urls_ref}){
-			$tag .= "<link rel=\"stylesheet\" href=\"$_\">\n";
+			$tag .= "<link rel=\"stylesheet\" href=\"". $self->url_for( $_ ). "\">\n";
 		}
 	}
 	return $tag;
