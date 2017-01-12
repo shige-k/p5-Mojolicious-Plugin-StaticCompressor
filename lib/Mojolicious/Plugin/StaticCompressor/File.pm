@@ -116,7 +116,7 @@ sub _load_file {
 		eval{
 			my $cache = Mojo::Asset::File->new( path => $s->{path_cached_file} );
 			$s->{updated_at} = (stat($s->{path_cached_file}))[9];
-			$s->{content} = $cache->slurp();
+			$s->{content} = Encode::decode_utf8($cache->slurp());
 		};
 	}
 
