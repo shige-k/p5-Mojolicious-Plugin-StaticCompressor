@@ -17,6 +17,7 @@ sub new {
 	$s->{config} = $hash{config};
 	$s->{mojo_static} = $hash{config}->{mojo_static} || die('Not specified mojo_static');
 	$s->{path_cache_dir} = $hash{config}->{path_cache_dir} || die('Not specified path_cache_dir');
+	$s->{getkey_with_mtime} = $hash{config}->{getkey_with_mtime} || 0;
 
 	$s->{key} = undef;
 	$s->{is_minify} = $hash{is_minify} || 0;
@@ -48,7 +49,7 @@ sub get_key {
 			if($key ne ""){
 				$key .= ",";
 			}
-			$key .= $file->get_raw_path();
+			$key .= $s->{getkey_with_mtime} ? $file->{path_cached_file} : $file->get_raw_path();
 		}
 
 		$key = Mojo::Util::sha1_sum($key);

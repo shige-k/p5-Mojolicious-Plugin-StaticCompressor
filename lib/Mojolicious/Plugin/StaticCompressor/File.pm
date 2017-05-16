@@ -19,6 +19,7 @@ sub new {
 	$s->{mojo_static} = $hash{config}->{mojo_static} || die('Not specified mojo_static');
 	$s->{path_cache_dir} = $hash{config}->{path_cache_dir} || die('Not specified path_cache_dir');
 	$s->{path_single_cache_dir} = $hash{config}->{path_single_cache_dir} || die('Not specified path_single_cache_dir');
+	$s->{getkey_with_mtime} = $hash{config}->{getkey_with_mtime} || 0;
 
 	$s->{file_key} = undef;
 	$s->{path_file} = $hash{path_file} || die('Not specified path_file'); # Path of raw file
@@ -42,7 +43,7 @@ sub get_key {
 	my $s = shift;
 	if($s->{is_use_cache}){
 		if(!defined $s->{file_key}){
-			$s->{file_key} = Mojo::Util::sha1_sum( $s->{path_file} ).'.'.$s->{extension};
+			$s->{file_key} = Mojo::Util::sha1_sum( $s->{path_file}.($s->{getkey_with_mtime} ? $s->{raw_path_mtime}:'') ).'.'.$s->{extension};
 		}
 		return $s->{file_key};
 	} else {
@@ -106,9 +107,18 @@ sub _load_file {
 		return;
 	}
 
+	# Load the file and check for update
+	my ($asset, $updated_at, $raw_content);
+	eval {
+		$asset = $s->{mojo_static}->file($s->{path_file});
+		$updated_at = (stat($asset->path()))[9];
+		$raw_content = Encode::decode_utf8($asset->slurp());
+	}; if($@){ die ("Can't read static file: ".$asset->path()."\n$@"); }
+
 	$s->_check_cache_dir();
 
 	# Generate cache path
+	$s->{raw_path_mtime} = $updated_at;
 	$s->{path_cached_file} = $s->{path_single_cache_dir}.$s->get_key();
 
 	# Load the file from cache
@@ -119,14 +129,6 @@ sub _load_file {
 			$s->{content} = Encode::decode_utf8($cache->slurp());
 		};
 	}
-
-	# Load the file and check for update
-	my ($asset, $updated_at, $raw_content);
-	eval {
-		$asset = $s->{mojo_static}->file($s->{path_file});
-		$updated_at = (stat($asset->path()))[9];
-		$raw_content = Encode::decode_utf8($asset->slurp());
-	}; if($@){ die ("Can't read static file: ".$asset->path()."\n$@"); }
 
 	# Process and cache
 	if(!defined $s->{updated_at} || $s->{updated_at} < $updated_at){ # Is Updated

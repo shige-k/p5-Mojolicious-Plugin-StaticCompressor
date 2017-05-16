@@ -137,6 +137,9 @@ sub _load_options {
 	# Expires seconds for automatic cleanup
 	$config->{auto_cleanup_expires_sec} = $option->{auto_cleanup_expires_sec} || 60 * 60 * 24 * 7; # 7days
 
+	# cache file generate by filename and mtime.
+	$config->{getkey_with_mtime} = $option->{getkey_with_mtime} || 0;
+
 	# Others
 	$config->{mojo_static} = $static;
 
