@@ -97,7 +97,7 @@ sub register {
 		);
 
 		# Automatic cleanup
-		_cleanup_old_files();
+		_cleanup_old_files( $app );
 
 		# Start background loop
 		if($config->{is_background}){
@@ -208,14 +208,16 @@ sub _start_background_loop {
 
 # Cleanup
 sub _cleanup_old_files {
+	my ($app) = @_;
 	File::Find::find(sub {
 		my $path = $File::Find::name;
+        my $file = $_;
 		my $now = time();
 		if( -f $path && $path =~ /^(.*)\.(js|css)$/ ){
 			my $updated_at = (stat($path))[9];
 			if($config->{auto_cleanup_expires_sec} < ($now - $updated_at)){
-				warn "DELETE: $path";
-				#unlink($config->{path_cache_dir}) || die("Can't delete old file: $path");
+                $app->log->info("DELETE: $path");
+				unlink($file) || die("Can't delete old file: $path");
 			}
 		}
 	}, $config->{path_cache_dir});
